@@ -395,24 +395,8 @@
         }
 
         .drawer-tabs {
-            display: flex;
-            gap: 2px;
+            display: none;
         }
-
-        .drawer-tab {
-            background: transparent;
-            border: none;
-            color: #666;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            padding: 4px 12px;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: 0.15s;
-        }
-
-        .drawer-tab:hover { color: #aaa; }
-        .drawer-tab.active { background: #2A2A2A; color: #E1E1E1; }
 
         #codeOutput {
             flex: 1;
@@ -700,10 +684,7 @@
         <div class="code-drawer">
             <div class="drawer-header">
                 <h3>Generated Code</h3>
-                <div class="drawer-tabs">
-                    <button class="drawer-tab active" onclick="setCodeTab('header', this)">Header</button>
-                    <button class="drawer-tab" onclick="setCodeTab('footer', this)">Footer</button>
-                </div>
+                <div class="drawer-tabs"></div>
             </div>
             <pre id="codeOutput"></pre>
         </div>
@@ -786,13 +767,8 @@
         });
     };
 
-    /* ---- code drawer tabs ---- */
-    window.setCodeTab = function (tab, btn) {
-        currentCodeTab = tab;
-        document.querySelectorAll('.drawer-tab').forEach(function (t) { t.classList.remove('active'); });
-        if (btn) btn.classList.add('active');
-        generateCode();
-    };
+    /* ---- code drawer tabs (removed — single output) ---- */
+    window.setCodeTab = function () {};
 
     /* ---- copy code ---- */
     window.copyCode = function () {
@@ -826,18 +802,16 @@
     /* ---- code generation ---- */
     function generateCode() {
         var out = $('codeOutput');
-        if (currentCodeTab === 'header') {
-            out.innerHTML = hlTag('&lt;link') + ' ' + hlKey('rel') + '=' + hlStr('"stylesheet"') + ' ' + hlKey('href') + '=' + hlStr('"https://cdn.jsdelivr.net/gh/square-design-lab/Image-Trail@latest/imageTrail.min.css"') + hlTag('&gt;');
-            return;
-        }
-
-        /* footer */
         var lines = [];
+
+        lines.push(hlTag('&lt;link') + ' ' + hlKey('rel') + '=' + hlStr('"stylesheet"') + ' ' + hlKey('href') + '=' + hlStr('"https://cdn.jsdelivr.net/gh/square-design-lab/Image-Trail@latest/imageTrail.min.css"') + hlTag('&gt;'));
+        lines.push('');
+
         var cfg = {};
         var fields = [
             { id: 'collectionUrl', key: 'collectionUrl', type: 'string' },
             { id: 'limit', key: 'limit', type: 'number' },
-            { id: 'effect', key: 'effect', type: 'string' },
+            { id: 'effect', key: 'effect', type: 'string', alwaysInclude: true },
             { id: 'imageWidth', key: 'imageWidth', type: 'number' },
             { id: 'imageHeight', key: 'imageHeight', type: 'number' },
             { id: 'borderRadius', key: 'borderRadius', type: 'string' },
@@ -856,7 +830,7 @@
             var v = val(f.id);
             var d = DEFAULTS[f.key];
             if (f.type === 'number') { v = parseFloat(v); d = parseFloat(d); }
-            if (v !== d && String(v) !== String(d)) cfg[f.key] = v;
+            if (f.alwaysInclude || (v !== d && String(v) !== String(d))) cfg[f.key] = v;
         });
 
         var keys = Object.keys(cfg);
@@ -918,7 +892,7 @@
                 el.style.opacity = '1';
             },
             hide: function (el) {
-                var speed = Math.max(val('fadeSpeed'), 1200);
+                var speed = val('fadeSpeed');
                 el.style.transition = 'opacity ' + speed + 'ms ease';
                 el.style.opacity = '0';
             }
@@ -937,7 +911,8 @@
                 }, 250);
             },
             hide: function (el) {
-                el.style.transition = 'transform 0.3s cubic-bezier(0.55,0,1,0.45), opacity 0.3s ease';
+                var speed = val('fadeSpeed');
+                el.style.transition = 'transform ' + speed + 'ms cubic-bezier(0.55,0,1,0.45), opacity ' + speed + 'ms ease';
                 el.style.transform = 'translate(-50%,-50%) scale(0)';
                 el.style.opacity = '0';
             }

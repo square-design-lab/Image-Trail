@@ -61,7 +61,7 @@
         el.style.opacity = '1';
       },
       hide: function (el) {
-        var speed = Math.max(opt('fadeSpeed'), 1200);
+        var speed = opt('fadeSpeed');
         el.style.transition = 'opacity ' + speed + 'ms ease';
         el.style.opacity = '0';
       }
@@ -80,7 +80,8 @@
         }, 250);
       },
       hide: function (el) {
-        el.style.transition = 'transform 0.3s cubic-bezier(0.55,0,1,0.45), opacity 0.3s ease';
+        var speed = opt('fadeSpeed');
+        el.style.transition = 'transform ' + speed + 'ms cubic-bezier(0.55,0,1,0.45), opacity ' + speed + 'ms ease';
         el.style.transform = 'translate(-50%,-50%) scale(0)';
         el.style.opacity = '0';
       }
