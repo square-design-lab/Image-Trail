@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Trail — Config Generator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #F5F5F7;
+            --bg-sidebar: #FFFFFF;
+            --text-main: #1C1C1E;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border-light: #E5E5E5;
+            --border-hover: #D4D4D4;
+            --border-active: #18181B;
+            --accent: #18181B;
+            --accent-hover: #09090B;
+            --accent-contrast: #FFFFFF;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --sidebar-width: 380px;
+            --header-height: 60px;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 13px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+        }
+
+        .sidebar-header {
+            height: var(--header-height);
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-icon {
+            width: 30px; height: 30px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header .badge {
+            font-size: 10px;
+            background: #F4F4F5;
+            padding: 2px 7px;
+            border-radius: 4px;
+            color: #52525B;
+            font-weight: 600;
+            border: 1px solid #D4D4D8;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .sidebar-content::-webkit-scrollbar { width: 6px; }
+        .sidebar-content::-webkit-scrollbar-thumb { background: #E5E5E5; border-radius: 3px; }
+        .sidebar-content::-webkit-scrollbar-thumb:hover { background: #D4D4D4; }
+
+        .group { margin-bottom: 24px; }
+
+        .group-header {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-tertiary);
+            margin-bottom: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: color 0.2s;
+        }
+
+        .group-header:hover { color: var(--text-main); }
+
+        .group-header::after {
+            content: '';
+            width: 6px; height: 6px;
+            border-right: 1.5px solid currentColor;
+            border-bottom: 1.5px solid currentColor;
+            transform: rotate(45deg);
+            transition: transform 0.2s;
+            margin-right: 4px;
+        }
+
+        .group.open .group-header::after { transform: rotate(-135deg); }
+        .group-body { display: none; }
+        .group.open .group-body { display: block; animation: slideIn 0.2s ease-out; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .control-row { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .helper-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            height: 36px;
+            padding: 0 10px;
+            font-family: inherit;
+            font-size: 13px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            color: var(--text-main);
+            transition: all 0.15s;
+            appearance: none;
+        }
+
+        input:hover, select:hover { border-color: var(--border-hover); }
+        input:focus, select:focus { border-color: var(--border-active); box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+
+        select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 14px;
+            padding-right: 30px;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            min-height: 24px;
+        }
+
+        .toggle-row label { margin: 0; font-weight: 400; color: var(--text-secondary); }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: 36px;
+            height: 20px;
+            background: #E5E5E5;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+            border: none;
+            flex-shrink: 0;
+        }
+
+        input[type="checkbox"]::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 16px; height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transition: 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        input[type="checkbox"]:checked { background: var(--accent); }
+        input[type="checkbox"]:checked::after { transform: translateX(16px); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #F5F5F7;
+            position: relative;
+        }
+
+        .topbar {
+            height: var(--header-height);
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-light);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .copy-btn {
+            background: var(--accent);
+            color: var(--accent-contrast);
+            border: none;
+            padding: 9px 20px;
+            border-radius: 7px;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+        }
+        .copy-btn:hover { background: var(--accent-hover); }
+        .copy-btn:active { transform: scale(0.97); }
+        .copy-btn.copied { background: #0EA5E9; box-shadow: 0 1px 3px rgba(14,165,233,0.3); }
+
+        .preview-container {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            background-image: radial-gradient(#E1E1E1 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 40px;
+        }
+
+        #previewFrame {
+            background: #fff;
+            width: 100%;
+            max-width: 1100px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            border-radius: var(--radius-lg);
+            transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid var(--border-light);
+            position: relative;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        /* ---- TRAIL PREVIEW SECTION ---- */
+        .trail-section {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trail-section .section-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .trail-section .section-content h1 {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: rgba(0,0,0,0.06);
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .trail-section .section-content p {
+            font-size: 14px;
+            color: rgba(0,0,0,0.2);
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        .trail-container-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .trail-img-preview {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform, opacity;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+        }
+
+        /* Custom cursor */
+        .custom-cursor {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(0,0,0,0.15);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s;
+            opacity: 0;
+        }
+
+        .custom-cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 4px; height: 4px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #previewFrame:hover ~ .custom-cursor,
+        #previewFrame .custom-cursor { opacity: 0; }
+
+        /* --- CODE DRAWER --- */
+        .code-drawer {
+            height: 250px;
+            background: #0D0D0D;
+            color: #E1E1E1;
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid var(--border-light);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .drawer-header {
+            padding: 10px 24px;
+            background: #1A1A1A;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drawer-header h3 {
+            margin: 0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+        }
+
+        .drawer-tabs {
+            display: flex;
+            gap: 2px;
+        }
+
+        .drawer-tab {
+            background: transparent;
+            border: none;
+            color: #666;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 4px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.15s;
+        }
+
+        .drawer-tab:hover { color: #aaa; }
+        .drawer-tab.active { background: #2A2A2A; color: #E1E1E1; }
+
+        #codeOutput {
+            flex: 1;
+            padding: 24px;
+            margin: 0;
+            overflow: auto;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #A9B7C6;
+        }
+
+        #codeOutput::-webkit-scrollbar { width: 6px; }
+        #codeOutput::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        /* --- SYNTAX HIGHLIGHTING --- */
+        #codeOutput .hl-key   { color: #E5BF78; }
+        #codeOutput .hl-str   { color: #87C98F; }
+        #codeOutput .hl-bool  { color: #79B8FF; }
+        #codeOutput .hl-num   { color: #FF9D7C; }
+        #codeOutput .hl-tag   { color: #6B8CAE; }
+        #codeOutput .hl-kw    { color: #C678DD; }
+
+        .mobile-tabs { display: none; }
+        .mobile-copy-btn { display: none; }
+
+        @media (max-width: 1023px) {
+            body { flex-direction: column; height: 100vh; overflow: hidden; }
+            .main-content { display: none; }
+
+            .sidebar {
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                bottom: calc(68px + env(safe-area-inset-bottom));
+                width: 100%;
+                border-right: none;
+                display: none;
+                flex-direction: column;
+                z-index: 50;
+            }
+
+            .sidebar-header { flex-shrink: 0; }
+
+            .mobile-tabs {
+                display: flex;
+                position: fixed; bottom: 0; left: 0; right: 0;
+                background: #fff;
+                border-top: 1px solid #E5E5E5;
+                z-index: 100;
+                height: 68px;
+                padding: 8px 12px;
+                padding-bottom: calc(8px + env(safe-area-inset-bottom));
+                gap: 6px;
+                align-items: stretch;
+            }
+
+            .tab-btn {
+                flex: 1;
+                border: none;
+                background: transparent;
+                color: var(--text-tertiary);
+                font-size: 11px;
+                font-weight: 500;
+                font-family: inherit;
+                cursor: pointer;
+                border-radius: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                transition: background 0.18s ease, color 0.18s ease;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .tab-btn svg { opacity: 0.5; transition: opacity 0.18s ease; }
+
+            .tab-btn.active {
+                background: var(--accent);
+                color: #fff;
+                font-weight: 600;
+            }
+            .tab-btn.active svg { opacity: 1; }
+
+            .mobile-copy-btn { display: flex; }
+
+            body.tab-edit .sidebar { display: flex; }
+            body.tab-edit .main-content { display: none; }
+
+            body.tab-preview .sidebar { display: none; }
+            body.tab-preview .main-content {
+                display: flex;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                bottom: calc(68px + env(safe-area-inset-bottom));
+                height: auto;
+            }
+            body.tab-preview .code-drawer { display: none; }
+
+            body.tab-code .sidebar { display: none; }
+            body.tab-code .main-content {
+                display: flex;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                bottom: calc(68px + env(safe-area-inset-bottom));
+                height: auto;
+            }
+            body.tab-code .preview-container { display: none; }
+            body.tab-code .code-drawer { flex: 1; height: auto; }
+        }
+    </style>
+</head>
+
+<body class="tab-edit">
+
+    <div class="mobile-tabs">
+        <button class="tab-btn active" onclick="setTab('edit')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+        </button>
+        <button class="tab-btn" onclick="setTab('preview')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Preview
+        </button>
+        <button class="tab-btn" onclick="setTab('code')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Code
+        </button>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>
+                <span class="brand-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16"/><path d="M14 14l1.586-1.586a2 2 0 012.828 0L22 16"/><path d="M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </span>
+                Image Trail <span class="badge">v1.0</span>
+            </h2>
+            <button class="copy-btn mobile-copy-btn" id="mobileCopyBtn" onclick="copyCode()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                Copy Code
+            </button>
+        </div>
+        <div class="sidebar-content">
+
+            <!-- COLLECTION -->
+            <div class="group open">
+                <div class="group-header" onclick="togGroup(this)">Collection</div>
+                <div class="group-body">
+                    <div class="control-row">
+                        <label>Collection URL</label>
+                        <input type="text" id="collectionUrl" value="/blog">
+                        <div class="helper-text">Path to the blog or portfolio collection.</div>
+                    </div>
+                    <div class="control-row">
+                        <label>Image Limit</label>
+                        <input type="number" id="limit" value="20" min="1" max="100">
+                    </div>
+                    <div class="control-row">
+                        <label>Image Size</label>
+                        <select id="imageSize">
+                            <option value="300w">300w</option>
+                            <option value="500w" selected>500w</option>
+                            <option value="750w">750w</option>
+                            <option value="1000w">1000w</option>
+                        </select>
+                        <div class="helper-text">Squarespace image format suffix.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EFFECT -->
+            <div class="group open">
+                <div class="group-header" onclick="togGroup(this)">Effect</div>
+                <div class="group-body">
+                    <div class="control-row">
+                        <label>Effect Preset</label>
+                        <select id="effect">
+                            <option value="fadeScale" selected>Fade & Scale</option>
+                            <option value="smoothTrail">Smooth Trail</option>
+                            <option value="popIn">Pop In</option>
+                            <option value="tiltDrift">Tilt & Drift</option>
+                            <option value="snapGrid">Snap Grid</option>
+                        </select>
+                        <div class="helper-text" id="effectHelper">Images fade in with scale animation and random rotation.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRAIL IMAGES -->
+            <div class="group open">
+                <div class="group-header" onclick="togGroup(this)">Trail Images</div>
+                <div class="group-body">
+                    <div class="control-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Width (px)</label>
+                            <input type="number" id="imageWidth" value="250" min="50" max="800">
+                        </div>
+                        <div>
+                            <label>Height (px)</label>
+                            <input type="number" id="imageHeight" value="330" min="50" max="800">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label>Border Radius</label>
+                        <input type="text" id="borderRadius" value="6px">
+                    </div>
+                    <div class="control-row">
+                        <label>Box Shadow</label>
+                        <input type="text" id="shadow" value="0 6px 25px rgba(0,0,0,0.18)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANIMATION -->
+            <div class="group">
+                <div class="group-header" onclick="togGroup(this)">Animation</div>
+                <div class="group-body">
+                    <div class="control-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Trail Length</label>
+                            <input type="number" id="trailLength" value="10" min="1" max="30">
+                        </div>
+                        <div>
+                            <label>Rotation (&deg;)</label>
+                            <input type="number" id="rotation" value="12" min="0" max="45">
+                        </div>
+                    </div>
+                    <div class="control-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Fade Speed (ms)</label>
+                            <input type="number" id="fadeSpeed" value="800" min="100" max="5000" step="100">
+                        </div>
+                        <div>
+                            <label>Mouse Threshold</label>
+                            <input type="number" id="mouseThreshold" value="60" min="10" max="200">
+                        </div>
+                    </div>
+                    <div class="helper-text">Threshold = min pixel distance between spawned images. Lower = more images.</div>
+                </div>
+            </div>
+
+            <!-- OPTIONS -->
+            <div class="group">
+                <div class="group-header" onclick="togGroup(this)">Options</div>
+                <div class="group-body">
+                    <div class="toggle-row">
+                        <label>Grayscale</label>
+                        <input type="checkbox" id="grayscale">
+                    </div>
+                    <div class="toggle-row">
+                        <label>Disable on Mobile</label>
+                        <input type="checkbox" id="disableOnMobile" checked>
+                    </div>
+                    <div class="control-row">
+                        <label>Mobile Breakpoint (px)</label>
+                        <input type="number" id="mobileBreakpoint" value="768" min="320" max="1200">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <button class="copy-btn" id="desktopCopyBtn" onclick="copyCode()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                Copy Code
+            </button>
+        </div>
+
+        <div class="preview-container">
+            <div id="previewFrame">
+                <div class="custom-cursor" id="customCursor"></div>
+                <div class="trail-section" id="trailSection">
+                    <div class="trail-container-preview" id="trailContainer"></div>
+                    <div class="section-content">
+                        <h1>MOVE YOUR<br>CURSOR</h1>
+                        <p>Hover over this area to see the trail effect</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-drawer">
+            <div class="drawer-header">
+                <h3>Generated Code</h3>
+                <div class="drawer-tabs">
+                    <button class="drawer-tab active" onclick="setCodeTab('header', this)">Header</button>
+                    <button class="drawer-tab" onclick="setCodeTab('footer', this)">Footer</button>
+                </div>
+            </div>
+            <pre id="codeOutput"></pre>
+        </div>
+    </div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ---- DEFAULTS (mirror plugin) ---- */
+    var DEFAULTS = {
+        collectionUrl: '/blog',
+        limit: 20,
+        effect: 'fadeScale',
+        imageWidth: 250,
+        imageHeight: 330,
+        borderRadius: '6px',
+        rotation: 12,
+        trailLength: 10,
+        fadeSpeed: 800,
+        mouseThreshold: 60,
+        grayscale: false,
+        shadow: '0 6px 25px rgba(0,0,0,0.18)',
+        disableOnMobile: true,
+        mobileBreakpoint: 768,
+        imageSize: '500w'
+    };
+
+    var effectDescriptions = {
+        fadeScale:    'Images fade in with scale animation and random rotation.',
+        smoothTrail:  'Rapid image spawning with smooth, lingering fade out.',
+        popIn:       'Bouncy spring-like pop in, then shrinks away.',
+        tiltDrift:   'Images tilt based on cursor direction, then drift away.',
+        snapGrid:    'Images snap to a loose grid with clip-path circle reveal.'
+    };
+
+    /* ---- Demo images (Unsplash) ---- */
+    var demoImages = [
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1465056836900-8f1e940f2114?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=500&h=660&fit=crop',
+        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&h=660&fit=crop'
+    ];
+
+    /* ---- state ---- */
+    var currentCodeTab = 'header';
+    var activeImages = [];
+    var imgIndex = 0;
+    var zCounter = 0;
+    var lastX = 0, lastY = 0, lastDx = 0, lastDy = 0;
+
+    /* ---- helpers ---- */
+    function $(id) { return document.getElementById(id); }
+    function val(id) {
+        var el = $(id);
+        if (!el) return '';
+        if (el.type === 'checkbox') return el.checked;
+        if (el.type === 'number') return parseFloat(el.value);
+        return el.value;
+    }
+
+    /* ---- group toggle ---- */
+    window.togGroup = function (header) {
+        header.parentElement.classList.toggle('open');
+    };
+
+    /* ---- mobile tabs ---- */
+    window.setTab = function (tab) {
+        document.body.className = 'tab-' + tab;
+        document.querySelectorAll('.tab-btn').forEach(function (btn, i) {
+            btn.classList.toggle('active', ['edit','preview','code'][i] === tab);
+        });
+    };
+
+    /* ---- code drawer tabs ---- */
+    window.setCodeTab = function (tab, btn) {
+        currentCodeTab = tab;
+        document.querySelectorAll('.drawer-tab').forEach(function (t) { t.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        generateCode();
+    };
+
+    /* ---- copy code ---- */
+    window.copyCode = function () {
+        var el = $('codeOutput');
+        var text = el.textContent || el.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+            var btns = document.querySelectorAll('.copy-btn');
+            btns.forEach(function (b) {
+                b.classList.add('copied');
+                var orig = b.innerHTML;
+                b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+                setTimeout(function () { b.classList.remove('copied'); b.innerHTML = orig; }, 1800);
+            });
+        });
+    };
+
+    /* ---- effect descriptions ---- */
+    function updateEffectHelper() {
+        var e = val('effect');
+        $('effectHelper').textContent = effectDescriptions[e] || '';
+    }
+
+    /* ---- syntax highlighting helpers ---- */
+    function hlTag(s) { return '<span class="hl-tag">' + s + '</span>'; }
+    function hlKey(s) { return '<span class="hl-key">' + s + '</span>'; }
+    function hlStr(s) { return '<span class="hl-str">' + s + '</span>'; }
+    function hlBool(s) { return '<span class="hl-bool">' + s + '</span>'; }
+    function hlNum(s) { return '<span class="hl-num">' + s + '</span>'; }
+    function hlKw(s) { return '<span class="hl-kw">' + s + '</span>'; }
+
+    /* ---- code generation ---- */
+    function generateCode() {
+        var out = $('codeOutput');
+        if (currentCodeTab === 'header') {
+            out.innerHTML = hlTag('&lt;link') + ' ' + hlKey('rel') + '=' + hlStr('"stylesheet"') + ' ' + hlKey('href') + '=' + hlStr('"https://cdn.jsdelivr.net/gh/square-design-lab/Image-Trail@latest/imageTrail.min.css"') + hlTag('&gt;');
+            return;
+        }
+
+        /* footer */
+        var lines = [];
+        var cfg = {};
+        var fields = [
+            { id: 'collectionUrl', key: 'collectionUrl', type: 'string' },
+            { id: 'limit', key: 'limit', type: 'number' },
+            { id: 'effect', key: 'effect', type: 'string' },
+            { id: 'imageWidth', key: 'imageWidth', type: 'number' },
+            { id: 'imageHeight', key: 'imageHeight', type: 'number' },
+            { id: 'borderRadius', key: 'borderRadius', type: 'string' },
+            { id: 'rotation', key: 'rotation', type: 'number' },
+            { id: 'trailLength', key: 'trailLength', type: 'number' },
+            { id: 'fadeSpeed', key: 'fadeSpeed', type: 'number' },
+            { id: 'mouseThreshold', key: 'mouseThreshold', type: 'number' },
+            { id: 'grayscale', key: 'grayscale', type: 'boolean' },
+            { id: 'shadow', key: 'shadow', type: 'string' },
+            { id: 'disableOnMobile', key: 'disableOnMobile', type: 'boolean' },
+            { id: 'mobileBreakpoint', key: 'mobileBreakpoint', type: 'number' },
+            { id: 'imageSize', key: 'imageSize', type: 'string' }
+        ];
+
+        fields.forEach(function (f) {
+            var v = val(f.id);
+            var d = DEFAULTS[f.key];
+            if (f.type === 'number') { v = parseFloat(v); d = parseFloat(d); }
+            if (v !== d && String(v) !== String(d)) cfg[f.key] = v;
+        });
+
+        var keys = Object.keys(cfg);
+        if (keys.length > 0) {
+            lines.push(hlTag('&lt;script&gt;'));
+            lines.push(hlKw('window') + '.' + hlKey('SDL_IMAGE_TRAIL_CONFIG') + ' = {');
+            keys.forEach(function (k, i) {
+                var v = cfg[k];
+                var comma = i < keys.length - 1 ? ',' : '';
+                var valHtml;
+                if (typeof v === 'boolean') valHtml = hlBool(String(v));
+                else if (typeof v === 'number') valHtml = hlNum(String(v));
+                else valHtml = hlStr("'" + v + "'");
+                lines.push('  ' + hlKey(k) + ': ' + valHtml + comma);
+            });
+            lines.push('};');
+            lines.push(hlTag('&lt;/script&gt;'));
+            lines.push('');
+        }
+
+        lines.push(hlTag('&lt;script') + ' ' + hlKey('src') + '=' + hlStr('"https://cdn.jsdelivr.net/gh/square-design-lab/Image-Trail@latest/imageTrail.min.js"') + hlTag('&gt;&lt;/script&gt;'));
+
+        out.innerHTML = lines.join('\n');
+    }
+
+    /* =====================================================
+       PREVIEW TRAIL ENGINE
+       ===================================================== */
+    var previewEffects = {
+
+        fadeScale: {
+            show: function (el) {
+                var rot = (Math.random() - 0.5) * val('rotation') * 2;
+                el.style.transition = 'transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease';
+                el.style.transform = 'translate(-50%,-50%) scale(0.5) rotate(' + rot + 'deg)';
+                el.style.opacity = '0';
+                void el.offsetWidth;
+                el.style.transform = 'translate(-50%,-50%) scale(1) rotate(' + rot + 'deg)';
+                el.style.opacity = '1';
+            },
+            hide: function (el) {
+                var rot = 0;
+                var m = el.style.transform.match(/rotate\(([-\d.]+)deg\)/);
+                if (m) rot = parseFloat(m[1]);
+                el.style.transition = 'transform ' + val('fadeSpeed') + 'ms ease, opacity ' + val('fadeSpeed') + 'ms ease';
+                el.style.transform = 'translate(-50%,-50%) scale(0.4) rotate(' + rot + 'deg)';
+                el.style.opacity = '0';
+            }
+        },
+
+        smoothTrail: {
+            show: function (el) {
+                var rot = (Math.random() - 0.5) * 6;
+                el.style.transition = 'transform 0.25s ease-out, opacity 0.2s ease';
+                el.style.transform = 'translate(-50%,-50%) scale(0.9) rotate(' + rot + 'deg)';
+                el.style.opacity = '0';
+                void el.offsetWidth;
+                el.style.transform = 'translate(-50%,-50%) scale(1) rotate(' + rot + 'deg)';
+                el.style.opacity = '1';
+            },
+            hide: function (el) {
+                var speed = Math.max(val('fadeSpeed'), 1200);
+                el.style.transition = 'opacity ' + speed + 'ms ease';
+                el.style.opacity = '0';
+            }
+        },
+
+        popIn: {
+            show: function (el) {
+                el.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease';
+                el.style.transform = 'translate(-50%,-50%) scale(0)';
+                el.style.opacity = '0';
+                void el.offsetWidth;
+                el.style.transform = 'translate(-50%,-50%) scale(1.05)';
+                el.style.opacity = '1';
+                setTimeout(function () {
+                    el.style.transform = 'translate(-50%,-50%) scale(1)';
+                }, 250);
+            },
+            hide: function (el) {
+                el.style.transition = 'transform 0.3s cubic-bezier(0.55,0,1,0.45), opacity 0.3s ease';
+                el.style.transform = 'translate(-50%,-50%) scale(0)';
+                el.style.opacity = '0';
+            }
+        },
+
+        tiltDrift: {
+            show: function (el, ctx) {
+                var dx = ctx.dx || 0;
+                var dy = ctx.dy || 0;
+                var angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                var tilt = Math.max(-20, Math.min(20, angle * 0.15));
+                el.style.transition = 'transform 0.35s ease-out, opacity 0.25s ease';
+                el.style.transform = 'translate(-50%,-50%) scale(0.8) rotate(' + tilt + 'deg)';
+                el.style.opacity = '0';
+                void el.offsetWidth;
+                el.style.transform = 'translate(-50%,-50%) scale(1) rotate(' + tilt + 'deg)';
+                el.style.opacity = '1';
+                el._tilt = tilt;
+            },
+            hide: function (el) {
+                var tilt = el._tilt || 0;
+                var driftX = (Math.random() - 0.5) * 40;
+                var driftY = 30 + Math.random() * 20;
+                el.style.transition = 'transform ' + val('fadeSpeed') + 'ms ease, opacity ' + val('fadeSpeed') + 'ms ease';
+                el.style.transform = 'translate(calc(-50% + ' + driftX + 'px), calc(-50% + ' + driftY + 'px)) scale(0.7) rotate(' + (tilt + 5) + 'deg)';
+                el.style.opacity = '0';
+            }
+        },
+
+        snapGrid: {
+            show: function (el) {
+                var gridSize = 60;
+                var cx = parseFloat(el.style.left);
+                var cy = parseFloat(el.style.top);
+                var snappedX = Math.round(cx / gridSize) * gridSize + (Math.random() - 0.5) * 30;
+                var snappedY = Math.round(cy / gridSize) * gridSize + (Math.random() - 0.5) * 30;
+                el.style.left = snappedX + 'px';
+                el.style.top = snappedY + 'px';
+                el.style.clipPath = 'circle(0% at 50% 50%)';
+                el.style.transform = 'translate(-50%,-50%) scale(1)';
+                el.style.opacity = '1';
+                el.style.transition = 'clip-path 0.5s cubic-bezier(0.22,1,0.36,1)';
+                void el.offsetWidth;
+                el.style.clipPath = 'circle(75% at 50% 50%)';
+            },
+            hide: function (el) {
+                el.style.transition = 'opacity ' + val('fadeSpeed') + 'ms ease, clip-path ' + val('fadeSpeed') + 'ms ease';
+                el.style.clipPath = 'circle(0% at 50% 50%)';
+                el.style.opacity = '0';
+            }
+        }
+    };
+
+    function getEffect() {
+        var e = val('effect');
+        return previewEffects[e] || previewEffects.fadeScale;
+    }
+
+    /* ---- preview mouse handling ---- */
+    var previewFrame = $('previewFrame');
+    var trailSection = $('trailSection');
+    var trailContainer = $('trailContainer');
+    var customCursor = $('customCursor');
+
+    previewFrame.addEventListener('mousemove', function (e) {
+        /* custom cursor */
+        customCursor.style.left = e.clientX + 'px';
+        customCursor.style.top = e.clientY + 'px';
+
+        var rect = trailSection.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+
+        var dx = x - lastX;
+        var dy = y - lastY;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+
+        var effectName = val('effect');
+        var threshold = effectName === 'smoothTrail' ? Math.min(val('mouseThreshold'), 40) : val('mouseThreshold');
+
+        if (dist < threshold) return;
+
+        lastDx = dx;
+        lastDy = dy;
+        lastX = x;
+        lastY = y;
+
+        spawnPreviewImage(x, y);
+    });
+
+    previewFrame.addEventListener('mouseleave', function () {
+        customCursor.style.opacity = '0';
+    });
+
+    previewFrame.addEventListener('mouseenter', function () {
+        customCursor.style.opacity = '1';
+    });
+
+    function spawnPreviewImage(x, y) {
+        var eff = getEffect();
+        var el = document.createElement('div');
+        el.className = 'trail-img-preview';
+        el.style.width = val('imageWidth') + 'px';
+        el.style.height = val('imageHeight') + 'px';
+        el.style.borderRadius = val('borderRadius');
+        el.style.boxShadow = val('shadow');
+        el.style.backgroundImage = 'url(' + demoImages[imgIndex % demoImages.length] + ')';
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.zIndex = zCounter++;
+        el.style.opacity = '0';
+
+        if (val('grayscale')) {
+            el.style.filter = 'grayscale(100%)';
+        }
+
+        trailContainer.appendChild(el);
+        imgIndex++;
+
+        var ctx = { dx: lastDx, dy: lastDy };
+        eff.show(el, ctx);
+
+        activeImages.push(el);
+
+        var effectName = val('effect');
+        var delay = effectName === 'smoothTrail' ? 600 : 350;
+
+        setTimeout(function () {
+            eff.hide(el);
+            setTimeout(function () {
+                if (el.parentNode) el.parentNode.removeChild(el);
+                var idx = activeImages.indexOf(el);
+                if (idx > -1) activeImages.splice(idx, 1);
+            }, val('fadeSpeed') + 100);
+        }, delay);
+
+        /* enforce trail length */
+        while (activeImages.length > val('trailLength')) {
+            var oldest = activeImages.shift();
+            eff.hide(oldest);
+            (function (node) {
+                setTimeout(function () {
+                    if (node.parentNode) node.parentNode.removeChild(node);
+                }, val('fadeSpeed') + 100);
+            })(oldest);
+        }
+    }
+
+    /* ---- wire up all inputs ---- */
+    function wireInputs() {
+        var inputs = document.querySelectorAll('.sidebar-content input, .sidebar-content select');
+        inputs.forEach(function (el) {
+            el.addEventListener('input', function () {
+                generateCode();
+                if (el.id === 'effect') updateEffectHelper();
+            });
+            el.addEventListener('change', function () {
+                generateCode();
+                if (el.id === 'effect') updateEffectHelper();
+            });
+        });
+    }
+
+    /* ---- init ---- */
+    wireInputs();
+    generateCode();
+    updateEffectHelper();
+
+})();
+</script>
+
+</body>
+</html>
